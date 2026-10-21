@@ -85,3 +85,5 @@ docker compose -f infra/compose.yml down
 - 预注册场景、重复次数、失败重跑规则及证据manifest。
 
 详见 `docs/` 和《从零开工工程操作手册V2.0.docx》。
+
+- Modification 1
