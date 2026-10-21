@@ -1,0 +1,62 @@
+name: B0 - Modern CI and Staged Gates
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      scenario_id:
+        description: 'N01 normal; B01 controlled QA health failure'
+        required: true
+        type: choice
+        options: [N01, B01]
+        default: N01
+permissions:
+  contents: read
+jobs:
+  b0:
+    runs-on: ubuntu-24.04
+    env:
+      SCENARIO_ID: ${{ inputs.scenario_id || 'N01' }}
+      QA_FAIL_HEALTH: ${{ inputs.scenario_id == 'B01' && '1' || '0' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run real unit tests
+        run: python -m unittest discover -s tests -v
+      - name: Build deterministic artifact and one Docker image
+        run: |
+          python tools/build.py
+          docker build -t closure-pilot:local -f infra/Dockerfile .
+          docker image inspect closure-pilot:local --format '{{.Id}}' > image_config_id.txt
+      - name: Start same image in Dev QA Staging containers
+        run: docker compose -f infra/compose.yml up -d
+      - name: Live health gates (controlled B01 fails)
+        run: |
+          mkdir -p evidence
+          python tools/check_stages.py --out evidence
+      - name: Record environment & evidence hash
+        if: always()
+        run: |
+          mkdir -p evidence
+          python --version > evidence/python_version.txt
+          docker version > evidence/docker_version.txt
+          echo "$GITHUB_SHA" > evidence/commit_sha.txt
+          test -f image_config_id.txt && cp image_config_id.txt evidence/image_config_id.txt || true
+          docker compose -f infra/compose.yml ps -a > evidence/compose_status.txt || true
+          docker compose -f infra/compose.yml logs > evidence/compose_logs.txt 2>&1 || true
+          python tools/record_manifest.py evidence
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: b0-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            evidence/
+            dist/release_app.pyz
+            image_config_id.txt
+          if-no-files-found: warn
+      - name: Stop test containers
+        if: always()
+        run: docker compose -f infra/compose.yml down --remove-orphans

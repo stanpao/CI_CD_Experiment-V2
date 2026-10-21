@@ -1,0 +1,70 @@
+name: B1 - Real GitHub Artifact Attestation
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  id-token: write
+  attestations: write
+jobs:
+  b1:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Reproducible build + test
+        run: |
+          python -m unittest discover -s tests -v
+          python tools/build.py
+          mkdir -p evidence/b1
+          sha256sum dist/release_app.pyz > evidence/b1/artifact_sha256.txt
+      - name: Deploy the identical image to Dev QA and Staging
+        run: |
+          docker build -t closure-pilot:local -f infra/Dockerfile .
+          docker compose -f infra/compose.yml up -d
+          python tools/check_stages.py --out evidence/stages
+      - name: Sign real build provenance (GitHub service)
+        uses: actions/attest@v4
+        with:
+          subject-path: dist/release_app.pyz
+      - name: Verify actual attestation
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh attestation verify dist/release_app.pyz --repo "$GITHUB_REPOSITORY" \
+            --format json > evidence/b1/verify_pass.json
+          echo 0 > evidence/b1/verify_pass_exit.txt
+      - name: Negative test - tampered bytes must fail signature validation
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp dist/release_app.pyz evidence/b1/tampered_app.pyz
+          printf 'X' >> evidence/b1/tampered_app.pyz
+          set +e
+          gh attestation verify evidence/b1/tampered_app.pyz --repo "$GITHUB_REPOSITORY" \
+            --format json > evidence/b1/verify_tamper_stdout.json 2> evidence/b1/verify_tamper_stderr.txt
+          rc=$?
+          set -e
+          printf '%s\n' "$rc" > evidence/b1/verify_tamper_exit.txt
+          test "$rc" -ne 0
+      - name: Evidence manifest
+        if: always()
+        run: |
+          mkdir -p evidence/b1
+          echo "$GITHUB_SHA" > evidence/b1/commit_sha.txt
+          gh --version > evidence/b1/gh_version.txt || true
+          docker compose -f infra/compose.yml logs > evidence/b1/compose_logs.txt 2>&1 || true
+          python tools/record_manifest.py evidence/b1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: b1-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            evidence/b1/
+            evidence/stages/
+            dist/release_app.pyz
+          if-no-files-found: warn
+      - name: Stop stage containers
+        if: always()
+        run: docker compose -f infra/compose.yml down --remove-orphans

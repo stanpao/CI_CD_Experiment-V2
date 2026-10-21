@@ -1,0 +1,69 @@
+name: B2 - Experimental Evidence Adapter (NOT final Algorithm 1)
+on:
+  workflow_dispatch:
+    inputs:
+      scenario_id:
+        description: 'Non-production demonstration scenario'
+        required: true
+        type: choice
+        options: [N01, A101, A102, A201, A202, A203, A204, A205]
+        default: N01
+permissions:
+  contents: read
+  id-token: write
+  attestations: write
+jobs:
+  b2-training:
+    runs-on: ubuntu-24.04
+    env:
+      SCENARIO_ID: ${{ inputs.scenario_id }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -v
+      - name: Start actual stage containers
+        run: |
+          python tools/build.py
+          docker build -t closure-pilot:local -f infra/Dockerfile .
+          docker compose -f infra/compose.yml up -d
+      - name: Capture actual upstream health observations
+        run: python tools/check_stages.py --out evidence
+      - name: Sign the same built artifact using real GitHub attestation
+        uses: actions/attest@v4
+        with:
+          subject-path: dist/release_app.pyz
+      - name: Verify actual artifact attestation before adding the closure adapter
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh attestation verify dist/release_app.pyz --repo "$GITHUB_REPOSITORY" \
+            --format json > evidence/b1_attestation_verify.json
+      - name: Controlled derived event modification; never overwrite raw evidence
+        run: python tools/prepare_case.py --run evidence --scenario "$SCENARIO_ID"
+      - name: Run deliberately limited A1/A2 training prototype
+        run: |
+          set +e
+          python tools/verify_case.py --run evidence > evidence/prototype_stdout.txt 2>&1
+          rc=$?
+          set -e
+          printf '%s\n' "$rc" > evidence/prototype_exit_code.txt
+          cat evidence/prototype_stdout.txt
+          # OPEN is a valid machine decision for planned negative scenarios.
+          test "$rc" -eq 0 -o "$rc" -eq 2
+      - name: Archive evidence
+        if: always()
+        run: |
+          mkdir -p evidence
+          echo "$GITHUB_SHA" > evidence/commit_sha.txt
+          python tools/record_manifest.py evidence
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: b2-training-${{ github.run_id }}-${{ github.run_attempt }}
+          path: evidence/
+          if-no-files-found: warn
+      - name: Stop stages
+        if: always()
+        run: docker compose -f infra/compose.yml down --remove-orphans
