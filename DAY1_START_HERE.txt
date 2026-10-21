@@ -1,0 +1,13 @@
+IEEE Access CI/CD 实验组开工包 V2.0 — 从这里开始
+
+1. 解压 ZIP。解压时保留所有隐藏目录（尤其 .github/workflows/）。
+2. 安装 Python 3.12（3.13也能用于第一天教学）。
+3. 在当前项目根目录打开终端：
+
+   python tools/first_day_check.py
+
+4. 程序末尾出现 D1 CHECK: SUCCESS 才算第一天本地教学通过。
+5. 查看 runs/first_day_report.json 和 runs/LOCAL-*/results/。
+6. 再阅读 docs/实验团队从零开工操作手册_V2.0.docx，执行D2 GitHub Actions B0。
+
+注意：本包的B2是教学原型，不是论文Algorithm 1；生成的本地数据不是IEEE Access正式实验结果。

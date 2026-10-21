@@ -1,0 +1,8 @@
+日期,负责人角色,具体操作,完成时留下的原始文件,如何判定完成,阻塞时处理
+D1上午,Python开发工程师,本机运行unittest + run_local N01 A101 A201,runs/LOCAL*/ 下的JSON和manifest,N01 PASS/CLOSED; A101 PASS/OPEN; A201 PASS/OPEN+NFI,先确保Python可用无需Docker
+D1下午,CI工程师,安装Docker和Compose并运行单镜像三环境,三环境health原始JSON和镜像config ID,Dev QA Staging均200,无法安装Docker时继续本地教学但标记未完成真实容器
+D2上午,CI工程师,创建GitHub独立公开仓库并推送全部文件含.github,Git commit SHA和仓库URL,仓库Actions可看到三个工作流,需授权和公开仓库
+D2下午,CI工程师,手动运行B0 N01与B01并用PR再触发一次,两次完整GitHub run日志+artifact,正常绿灯/真实QA故障红灯,保留工作流失败工件不可只留绿灯
+D3,供应链工程师,运行B1签发证明正例与篡改反例,B1 attestation verify JSON和失败exit code,正常真验证通过/篡改确实失败,计划权限不支持标记N/A并提交错误信息
+D4,算法适配工程师,运行B2教学脚手架N01 A101 A201,三次raw/disp/case/result及manifest,脚手架按预期区分但不算论文正式实验,另开分支实现真正双时点A2
+D5,实验负责人/Oracle/QA,冻结E2协议和独立Oracle安排,协议sha+人员签字+第一次实验周报,不得调参后回写独立标签,不具备则仅确认工具链启动

@@ -1,0 +1,10 @@
+场景,本包运行入口,B0本地门禁预期,B1真实证明,教学B2预期,代表的研究问题,证据性质
+N01,python tools/run_local.py --scenario N01,PASS,单独GitHub运行,CLOSED,正常例误阻断,仅教学
+B01,python tools/run_local.py --scenario B01,FAIL,单独GitHub运行,OPEN,成熟门禁应检出,真实HTTP故障加受控注入
+A101,python tools/run_local.py --scenario A101,PASS,未运行,OPEN,原始信号遗漏处置,受控教学故障
+A102,python tools/run_local.py --scenario A102,PASS,未运行,OPEN,重复有效处置,受控教学故障
+A201,python tools/run_local.py --scenario A201,PASS,未运行,OPEN/NFI,后继Requirement绑定缺失,受控教学故障
+A202,python tools/run_local.py --scenario A202,PASS,未运行,OPEN,目标发布验证未完成,受控教学故障
+A203,python tools/run_local.py --scenario A203,PASS,未运行,OPEN/PENDING,目标尚未到期,受控教学故障
+A204,python tools/run_local.py --scenario A204,PASS,未运行,CLOSED,后继验证完成,受控教学故障
+A205,python tools/run_local.py --scenario A205,PASS,未运行,OPEN/NFI,源发布关联无法核实,受控教学故障

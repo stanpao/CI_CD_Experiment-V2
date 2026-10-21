@@ -1,0 +1,37 @@
+{
+  "results": [
+    {
+      "scenario": "N01",
+      "B0": "PASS",
+      "B1": "NOT_RUN",
+      "B2_TRAINING": "CLOSED",
+      "evidence_status": "NOT_APPLICABLE",
+      "source": "LOCAL_TRAINING_ONLY"
+    },
+    {
+      "scenario": "B01",
+      "B0": "FAIL",
+      "B1": "NOT_RUN",
+      "B2_TRAINING": "OPEN",
+      "evidence_status": "NOT_APPLICABLE",
+      "source": "LOCAL_TRAINING_ONLY"
+    },
+    {
+      "scenario": "A101",
+      "B0": "PASS",
+      "B1": "NOT_RUN",
+      "B2_TRAINING": "OPEN",
+      "evidence_status": "NOT_APPLICABLE",
+      "source": "LOCAL_TRAINING_ONLY"
+    },
+    {
+      "scenario": "A201",
+      "B0": "PASS",
+      "B1": "NOT_RUN",
+      "B2_TRAINING": "OPEN",
+      "evidence_status": "NFI",
+      "source": "LOCAL_TRAINING_ONLY"
+    }
+  ],
+  "warning": "NOT THE IEEE ACCESS E1 E2 E3 RESEARCH RESULTS"
+}

@@ -1,0 +1,2 @@
+# The training example uses Python standard library only; no third-party Python requirements.
+# Formal experiment adapters will have an independently locked dependency manifest.
